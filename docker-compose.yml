@@ -1,0 +1,40 @@
+services:
+  csi-local:
+    image: ghcr.io/fzen475/helm-install:latest
+    container_name: helm-csi-local
+    env_file: ./.env
+    environment:
+      TRACE: false
+      CUSTOM_CA_CERTS: "/tmp/ca.crt"
+      KUBECONFIG: "/root/.kube/config"
+      
+      HELM_REPOS: "helm_library@oci://gitlab-registry.gitlab.svc:5000/library/helm/charts" # "extra_chart_1@oci:// extra_chart_2@oci://"
+      HELM_REPO_HELM_LIBRARY_USER: ${HELM_REPO_HELM_LIBRARY_USER}
+      HELM_REPO_HELM_LIBRARY_PASSWORD: ${HELM_REPO_HELM_LIBRARY_PASSWORD}
+
+      # helm $ENV_VALUES $HELM_COMMON_VALUES $ENV_NAMESPACE $HELM_DEPLOY_ARGS $ENV_APP_NAME $HELM_DEPLOY_CHART
+      ENV_VALUES: ""
+      ENV_NAMESPACE: "provisioners"
+      ENV_APP_NAME: "csi-local"
+      HELM_DEPLOY_CHART: "./chart/" # ./chart/ или gitlab/gitlab
+
+      DELETE_HELM: false
+      HELM_DELETE_ARGS: "uninstall"
+
+      INSTALL_HELM: true
+      HELM_DEPLOY_ARGS: 'upgrade --install --rollback-on-failure --wait=hookOnly --timeout 5m0s'
+    volumes:
+      - /tmp/csi-local:/source
+    secrets:
+      - source: kubeconfig
+        target: /root/.kube/config
+        mode: 0600
+      - source: ca.crt
+        target: /tmp/ca.crt
+        mode: 0600
+
+secrets:
+  kubeconfig:
+    file: /root/.kube/config
+  ca.crt:
+    file: /etc/ssl/certs/ca.crt

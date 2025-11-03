@@ -1,0 +1,20 @@
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: local-storage
+parameters:
+  nodePath: /local-storage
+  pathPattern: "{{ `{{ .PVC.Namespace }}/{{ .PVC.Name }}` }}" 
+provisioner: rancher.io/local-path
+volumeBindingMode: WaitForFirstConsumer
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: local-storage-pod-cache
+parameters:
+  nodePath: /local-storage
+  pathPattern: "{{ `{{ .PVC.Namespace }}/pod-cache` }}"
+provisioner: rancher.io/local-path
+volumeBindingMode: WaitForFirstConsumer

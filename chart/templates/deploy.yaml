@@ -1,0 +1,52 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "standard.standardLabels" . | nindent 4 -}}
+    {{- include "common.get_dict" (dict "vars" (list .Values.global.labels ) ) | nindent 4 -}}
+  {{- include "common.get_dict" (dict "name" "annotations" "vars" (list .Values.global.annotations ) "nindent" 2 ) | nindent 2 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "standard.standardSelectorLabels" . | nindent 6 -}}
+  {{- include "common.get_int_value" (dict "name" "replicas" "vars" (list .Values.replicas .Values.global.replicas) "default" 1 ) | nindent 2 }}
+  {{- include "common.get_dict" (dict "name" "strategy" "vars" (list .Values.strategy .Values.global.strategy ) "coalesce" true "nindent" 2 ) | nindent 2 }}
+  template:
+    metadata:
+      labels:
+        {{- include "standard.standardLabels" . | nindent 8 }}
+        {{- include "common.get_lists" (dict "vars" (list .Values.global.containerLabels ) ) | nindent 8 }} 
+      {{- include "common.get_dict" (dict "name" "annotations" "vars" (list .Values.global.containerAnnotations ) "nindent" 2 ) | nindent 6 }}
+    spec:
+      {{- include "common.get_lists" (dict "name" "affinity" "vars" (list .Values.affinity .Values.global.affinity ) "coalesce" true "nindent" 2 ) | nindent 6 }}
+      {{- include "common.get_dict" (dict "name" "nodeSelector" "vars" (list .Values.nodeSelector .Values.global.nodeSelector ) "coalesce" true "nindent" 2 ) | nindent 6 }}
+      {{- include "common.get_lists" (dict "name" "tolerations" "vars" (list .Values.tolerations .Values.global.tolerations ) "coalesce" true "nindent" 2 ) | nindent 6 }}
+      serviceAccountName: local-path-provisioner-service-account
+      containers:
+        - name: {{ .Release.Name }}
+          image: rancher/local-path-provisioner:v0.0.32
+          imagePullPolicy: IfNotPresent
+          command:
+            - local-path-provisioner
+            - --debug
+            - start
+            - --config
+            - /etc/config/config.json
+          volumeMounts:
+            - name: config-volume
+              mountPath: /etc/config/
+          env:
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: CONFIG_MOUNT_PATH
+              value: /etc/config/
+      volumes:
+        - name: config-volume
+          configMap:
+            name: local-path-config

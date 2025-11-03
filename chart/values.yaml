@@ -1,0 +1,16 @@
+global:
+  labels: {}
+  annotations:
+    reloader.stakater.com/auto: "true"
+  replicas: 1
+  strategy: {}
+  containerLabels: {}
+  containerAnnotations: {}
+
+affinity: []
+nodeSelector:
+  kubernetes.io/hostname: "control02"
+tolerations:
+  - key: "node-role.kubernetes.io/control-plane"
+    operator: "Exists"
+    effect: "NoSchedule"
